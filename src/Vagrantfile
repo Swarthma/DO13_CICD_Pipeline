@@ -1,0 +1,62 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "4048"
+    vb.cpus = 2
+  end
+
+  #config.vm.synced_folder "./manifests", "/home/vagrant/manifests"
+
+  config.vm.define "master" do |master|
+    master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "192.168.56.10"
+
+    master.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y curl
+      curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --flannel-iface=enp0s8" sh -
+      cp /var/lib/rancher/k3s/server/node-token /vagrant/token
+      mkdir -p /home/vagrant/.kube
+      cp /etc/rancher/k3s/k3s.yaml /home/vagrant/.kube/config
+      chown -R vagrant:vagrant /home/vagrant/.kube
+    SHELL
+  end
+
+  config.vm.define "worker1" do |worker|
+    worker.vm.hostname = "worker1"
+    worker.vm.network "private_network", ip: "192.168.56.11"
+
+    worker.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y curl
+      while [ ! -f /vagrant/token ]; do sleep 2; done
+      TOKEN=$(cat /vagrant/token)
+      curl -sfL https://get.k3s.io | \
+        K3S_URL="https://192.168.56.10:6443" \
+        K3S_TOKEN="$TOKEN" \
+        INSTALL_K3S_EXEC="agent --flannel-iface=enp0s8" \
+        sh -
+    SHELL
+  end
+
+  config.vm.define "worker2" do |worker|
+    worker.vm.hostname = "worker2"
+    worker.vm.network "private_network", ip: "192.168.56.12"
+
+    worker.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y curl
+      while [ ! -f /vagrant/token ]; do sleep 2; done
+      TOKEN=$(cat /vagrant/token)
+      curl -sfL https://get.k3s.io | \
+        K3S_URL="https://192.168.56.10:6443" \
+        K3S_TOKEN="$TOKEN" \
+        INSTALL_K3S_EXEC="agent --flannel-iface=enp0s8" \
+        sh -
+    SHELL
+  end
+end

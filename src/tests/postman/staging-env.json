@@ -1,0 +1,9 @@
+{
+  "name": "staging",
+  "values": [
+    { "key": "API_HOST", "value": "gateway-service.staging.svc.cluster.local" },
+    { "key": "AUTH_HOST", "value": "session-service.staging.svc.cluster.local" },
+    { "key": "GATEWAY_PORT", "value": "8087" },
+    { "key": "USERS_PORT", "value": "8081" }
+  ]
+}

@@ -1,0 +1,15 @@
+concurrent = 10
+check_interval = 3
+
+[[runners]]
+  name = "kubernetes-runner"
+  executor = "kubernetes"
+  [runners.kubernetes]
+    image = "docker:stable"
+    namespace = "gitlab-runner"
+    privileged = true
+    [runners.kubernetes.pod_security_context]
+      run_as_non_root = false
+    [runners.kubernetes.resources]
+      requests = { cpu = "500m", memory = "1Gi" }
+      limits   = { cpu = "1000m", memory = "2Gi" }
